@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>New Manhattan - Gestión de Platos</title>
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #c01313;
+        background-image: url("background.jpg");
+        background-size: cover;
+        background-attachment: fixed;
+        color: #444;
+      }
+
+      h1,
+      h2 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      #platos-section,
+      #pedidos-section,
+      #real-time-pedidos {
+        background: rgba(255, 255, 255, 0.8);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+
+      table,
+      th,
+      td {
+        border: 1px solid #35ae55;
+      }
+
+      th,
+      td {
+        padding: 10px;
+        text-align: left;
+      }
+
+      th {
+        background-color: #007bff;
+        color: #fff;
+      }
+
+      td {
+        background-color: #f9f9f9;
+      }
+
+      button {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      form label {
+        display: block;
+        margin: 10px 0 5px;
+      }
+
+      form input {
+        padding: 10px;
+        width: calc(100% - 22px);
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+
+      ul {
+        list-style-type: none;
+        padding: 0;
+      }
+
+      ul li {
+        background: #fff;
+        margin: 5px 0;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Gestión de Platos - Restaurante New Manhattan</h1>
+    <section id="platos-section">
+      <h2>Platos Ofrecidos</h2>
+      <table id="platos-table">
+        <thead>
+          <tr>
+            <th>Nombre del Plato</th>
+            <th>Precio</th>
+            <th>Contenido</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Filas de platos se agregan dinámicamente aquí -->
+        </tbody>
+      </table>
+      <button id="add-plato-btn">Agregar Plato</button>
+    </section>
+
+    <section id="pedidos-section">
+      <h2>Realizar Pedido</h2>
+      <form id="pedido-form">
+        <label for="pedido-nombre">Nombre del Plato:</label>
+        <input type="text" id="pedido-nombre" required />
+        <label for="pedido-cantidad">Cantidad:</label>
+        <input type="number" id="pedido-cantidad" required />
+        <button type="submit">Realizar Pedido</button>
+      </form>
+    </section>
+
+    <section id="real-time-pedidos">
+      <h2>Pedidos en Tiempo Real</h2>
+      <ul id="pedidos-list">
+        <!-- Pedidos en tiempo real se muestran aquí -->
+      </ul>
+    </section>
+
+    <button id="chat-btn">Atención al Cliente</button>
+
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const socket = io();
+
+        const platosTable = document.querySelector("#platos-table tbody");
+        const addPlatoBtn = document.getElementById("add-plato-btn");
+        const pedidoForm = document.getElementById("pedido-form");
+        const pedidosList = document.getElementById("pedidos-list");
+        const chatBtn = document.getElementById("chat-btn");
+
+        addPlatoBtn.addEventListener("click", () => {
+          const newRow = document.createElement("tr");
+          newRow.innerHTML = `
+                    <td contenteditable="true">Nuevo Plato</td>
+                    <td contenteditable="true">$0.00</td>
+                    <td contenteditable="true">Contenido del Plato</td>
+                    <td>
+                        <button class="save-btn">Guardar</button>
+                        <button class="delete-btn">Eliminar</button>
+                    </td>
+                `;
+          platosTable.appendChild(newRow);
+
+          newRow
+            .querySelector(".save-btn")
+            .addEventListener("click", savePlato);
+          newRow.querySelector(".delete-btn").addEventListener("click", () => {
+            platosTable.removeChild(newRow);
+          });
+        });
+
+        pedidoForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+          const nombre = document.getElementById("pedido-nombre").value;
+          const cantidad = document.getElementById("pedido-cantidad").value;
+          socket.emit("nuevo-pedido", { nombre, cantidad });
+          pedidoForm.reset();
+        });
+
+        socket.on("pedido-realizado", (pedido) => {
+          const pedidoItem = document.createElement("li");
+          pedidoItem.textContent = `${pedido.nombre} - Cantidad: ${pedido.cantidad}`;
+          pedidosList.appendChild(pedidoItem);
+        });
+
+        function savePlato(e) {
+          const row = e.target.closest("tr");
+          const nombre = row.cells[0].textContent;
+          const precio = row.cells[1].textContent;
+          const contenido = row.cells[2].textContent;
+          console.log(`Guardado: ${nombre} - ${precio} - ${contenido}`);
+        }
+
+        chatBtn.addEventListener("click", () => {
+          window.location.href = "chat.html";
+        });
+      });
+    </script>
+  </body>
+</html>
